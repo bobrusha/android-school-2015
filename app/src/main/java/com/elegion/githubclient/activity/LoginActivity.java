@@ -1,9 +1,12 @@
 package com.elegion.githubclient.activity;
 
 import android.graphics.Bitmap;
+import android.net.http.SslError;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.text.TextUtils;
+import android.webkit.SslErrorHandler;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
@@ -39,6 +42,7 @@ public class LoginActivity extends BaseActivity {
     }
 
     private class AuthWebViewClient extends WebViewClient {
+        private boolean mWasError;
 
         private boolean checkDone(WebView view, String url) {
             boolean result = false;
@@ -61,11 +65,33 @@ public class LoginActivity extends BaseActivity {
         }
 
         @Override
+        public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+            super.onReceivedError(view, errorCode, description, failingUrl);
+            mWasError = true;
+        }
+
+        @Override
+        public void onReceivedSslError(WebView view, @NonNull SslErrorHandler handler, SslError error) {
+            handler.cancel();
+            mWasError = true;
+        }
+
+        @Override
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
+            mWasError = false;
             if (isErrorUrl(url)) {
                 view.stopLoading();
             } else if (!checkDone(view, url)) {
                 super.onPageStarted(view, url, favicon);
+            }
+        }
+
+        @Override
+        public void onPageFinished(WebView view, String url) {
+            super.onPageFinished(view, url);
+            if (mWasError) {
+                ErrorDialogFragment.newInstance(
+                        R.string.error_message).show(getFragmentManager(), "dialog");
             }
         }
 
@@ -117,7 +143,7 @@ public class LoginActivity extends BaseActivity {
                         .executePost();
 
                 if (responseObject.optInt(ApiClient.STATUS_CODE) != ApiClient.STATUS_CODE_OK) {
-                    //TODO: handle error
+                    return false;
                 }
 
                 String accessToken = responseObject.optString(ACCESS_TOKEN_RESPONSE_KEY);
@@ -142,7 +168,8 @@ public class LoginActivity extends BaseActivity {
             if (success) {
                 startActivity(UserActivity.class, true);
             } else {
-                showSingleToast(SOME_ERROR);
+                ErrorDialogFragment.newInstance(
+                        R.string.authorization_error_message).show(getFragmentManager(), "dialog");
             }
         }
     }

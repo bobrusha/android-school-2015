@@ -34,6 +34,7 @@ public class MyRepositoriesActivity extends BaseActivity {
         setContentView(R.layout.ac_repositories);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         mRepositoryList = (RecyclerView) findViewById(R.id.repositories_list);
+        mRepositoryList.addItemDecoration(new MyItemDecoration(16, 16, 16, 16));
         mRepositoryList.setLayoutManager(new LinearLayoutManager(this));
         mRepositoryList.setAdapter(new RepositoriesAdapter());
         setSupportActionBar(toolbar);
@@ -70,10 +71,10 @@ public class MyRepositoriesActivity extends BaseActivity {
                         .executeGet();
 
                 if (responseObject.optInt(ApiClient.STATUS_CODE) != ApiClient.STATUS_CODE_OK) {
-                    //TODO: handle error
+                    return repositories;
                 }
 
-                JSONArray array = (JSONArray)responseObject.get(ApiClient.LIST_DATA_KEY);
+                JSONArray array = (JSONArray) responseObject.get(ApiClient.LIST_DATA_KEY);
 
                 for (int i = 0; i < array.length(); i++) {
                     repositories.add(
@@ -91,7 +92,11 @@ public class MyRepositoriesActivity extends BaseActivity {
 
         @Override
         protected void onPostExecute(List<Repository> repositories) {
-            ((RepositoriesAdapter)mRepositoryList.getAdapter()).addAll(repositories);
+            if (repositories.isEmpty()) {
+                ErrorDialogFragment.newInstance(R.string.authorization_error_message).show(getFragmentManager(), "dialog");
+            } else {
+                ((RepositoriesAdapter) mRepositoryList.getAdapter()).addAll(repositories);
+            }
         }
     }
 }

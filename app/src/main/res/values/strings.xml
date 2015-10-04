@@ -6,4 +6,9 @@
     <string name="logout">Выйти</string>
     <string name="ab_my_repositories">Мои репозитории</string>
     <string name="ab_my_profile">Мой профиль</string>
+
+    <string name="authorization_error_message">Произошла ошибка авторизации</string>
+    <string name="error_message">Произошла ошибка</string>
+    <string name="go_to_login_button">Вернуться к авторизации</string>
+
 </resources>
